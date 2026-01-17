@@ -6,8 +6,9 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Drivetrain;
+import frc.robot.Robot;
 
-public class driveSpinwaysPID extends Command{
+public class turnTowardsAprilPID extends Command {
 private Drivetrain lDrivetrain;
 private double m_goalPos = 0;
 private double wrappedAngle = 0;
@@ -22,8 +23,10 @@ private final ProfiledPIDController m_PIDController;
    * @param angle in Radians, positive is counter clockwise; 
    * @param drivetrain
 */
-  public driveSpinwaysPID(double p_Angle, double p_Period, Drivetrain driveTrain) {
-    wrappedAngle = MathUtil.angleModulus(p_Angle); //Wrap the angle to be between -pi and pi
+  public turnTowardsAprilPID(double ang, double p_Period, Drivetrain driveTrain) {
+    
+    
+    wrappedAngle = MathUtil.angleModulus(ang); //Wrap the angle to be between -pi and pi
     lDrivetrain = driveTrain;
     m_Period = p_Period;
     addRequirements(lDrivetrain);
@@ -42,8 +45,8 @@ private final ProfiledPIDController m_PIDController;
   public void initialize() {
     //Run once, at the start of the command
     m_initialPos = lDrivetrain.m_odometry.getPoseMeters().getRotation().getRadians();
-    System.out.print("InitPos = ");
-    System.out.println(m_initialPos);
+    System.out.println("InitPos = ");
+    System.out.print(m_initialPos);
     m_goalPos = m_initialPos + wrappedAngle;
   }
 

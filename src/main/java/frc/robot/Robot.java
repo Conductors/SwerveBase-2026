@@ -29,6 +29,7 @@ import frc.robot.commands.driveSidewaysPID;
 import frc.robot.commands.driveSpinwaysPID;
 import frc.robot.commands.driveStraightPID;
 import frc.robot.commands.driveToPositionPID;
+import frc.robot.commands.turnTowardsAprilPID;
 import frc.robot.subsystems.LEDSubsystem;
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -57,6 +58,8 @@ public class Robot extends TimedRobot {
   private final Drivetrain m_swerve = new Drivetrain();
   private final Field2d m_field = new Field2d();
 
+  private RawFiducial[] fiducials;
+
   StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
 
   private HashMap<Integer, RawFiducial> aprilTags = new HashMap<Integer, RawFiducial>();
@@ -71,7 +74,6 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_AutoChooser = new SendableChooser<>();
   private final SendableChooser<String> m_AprilTagSelected = new SendableChooser<>();
 
-
   private final LEDSubsystem ledSystem = new LEDSubsystem();
 
   private LimelightHelpers limelight = new LimelightHelpers();
@@ -83,6 +85,10 @@ public class Robot extends TimedRobot {
   double distToRobot;      // Distance to robot
   double ambiguity;        // Tag pose ambiguity
   int closestAprilTagID = 0;  //Tag ID with the greatest area
+
+  private int tagID = 3;
+  private double txToTurn = 0;
+  private double angleToTurn = 0;
 
 public Robot() {
   //CameraServer.startAutomaticCapture();
@@ -122,16 +128,16 @@ public Robot() {
     
 
 
-    RawFiducial[] fiducials = LimelightHelpers.getRawFiducials("");
+    fiducials = LimelightHelpers.getRawFiducials("");
     closestAprilTagID = 0;  //reset the closest tag ID each time
     double closestAprilTagArea = 0;
     for (RawFiducial fiducial : fiducials) {
-      if (!aprilTags.containsKey(fiducial.id))
+      /*if (!aprilTags.containsKey(fiducial.id))
       {
         aprilTags.put(fiducial.id, fiducial);
       }else{
         aprilTags.replace(fiducial.id, fiducial);
-      }
+      }*/
         id = fiducial.id;                    // Tag ID
         txnc = fiducial.txnc;             // X offset (no crosshair)
         tync = fiducial.tync;             // Y offset (no crosshair)
@@ -184,8 +190,11 @@ public Robot() {
     backButton.onTrue(shiftGears()); 
     startButton.onTrue(changeIsFieldRelative());
     
-    aButton.onTrue(turnTorwardAprilTag(m_AprilTagSelected.getSelected()));   //turn toward the closest AprilTag 
-    //bButton.onTrue(new setCranePosition(Constants.Position.keProcessor, m_AlgaeGrabber));
+    aButton.onTrue(turnTowardAprilTag(3)); 
+    //aButton.onTrue(turnTorwardAprilTag(m_AprilTagSelected.getSelected()));   //turn toward the closest AprilTag 
+  //turn toward the closest AprilTag 
+    bButton.onTrue(new driveSpinwaysPID(0, getPeriod(), m_swerve));
+  //bButton.onTrue(new setCranePosition(Constants.Position.keProcessor, m_AlgaeGrabber));
     //yButton.onTrue(new setCranePosition(Constants.Position.keReef3, m_AlgaeGrabber));
     //xButton.onTrue(new setCranePosition(Constants.Position.keReef2, m_AlgaeGrabber));
     
@@ -249,8 +258,24 @@ public Robot() {
     SmartDashboard.putNumber("rot", rot);
 
     m_swerve.drive(xSpeed, ySpeed, rot, isFieldRelative, getPeriod()); 
+  
 
+    if (tagID != 0){
+      System.out.print(tagID);
+      System.out.print("Something");
+      for(RawFiducial fiducial : fiducials)
+        if (fiducial.id == tagID) {
+          txToTurn = fiducial.txnc;
+        } else {
+          txToTurn = 0;
+        }
+      angleToTurn = -(txToTurn)*(Math.PI/180); 
+      SmartDashboard.putNumber("TXTesting", txToTurn);
+      SmartDashboard.putNumber("angleToTurn", angleToTurn);
+      }
   }
+
+  
 
 
   public void publishToDashboard()
@@ -262,8 +287,7 @@ public Robot() {
     SmartDashboard.putBoolean("High Gear Enabled", isHighGear);
     SmartDashboard.putBoolean("isFieldRelative", isFieldRelative);
 
-    SmartDashboard.putNumber("RightTrigger", m_controller.getRightTriggerAxis());
-    
+    SmartDashboard.putNumber("RightTrigger", m_controller.getRightTriggerAxis());    
   }
 
 
@@ -337,17 +361,32 @@ public Robot() {
     );
   }
 
-  public Command turnTorwardAprilTag(String tagID) {
-    System.out.print(tagID);
-    if (tagID != "None"){
-
-      double angleToTurn = -((aprilTags.get(Integer.valueOf(tagID))).txnc)*(Math.PI/180); //convert degrees to radians and invert
-      return new driveSpinwaysPID(angleToTurn, getPeriod(), m_swerve); //replace 0 with angle to turn
-    }else{
-      return new driveSpinwaysPID(0f, getPeriod(), m_swerve); //replace 0 with angle to turn
-    }
-
+  public Command turnTowardAprilTag(int tagID) {
+    //double angle = 0;
+    return Commands.sequence(
+      //new InstantCommand(() -> ang = angleToTurn),  //getAprilTx(3)
+      new turnTowardsAprilPID(angleToTurn, getPeriod(), m_swerve)
+    );
   }
+
+  /*public double getAprilTx (int tagID) {
+     System.out.print(tagID);
+        System.out.print("Something");
+            double txToTurn = 0;
+
+    if (tagID != 0){
+      
+      for(RawFiducial fiducial : fiducials)
+        if (fiducial.id == tagID) {
+          txToTurn = fiducial.txnc;
+        } else {
+          txToTurn = 0;
+        }
+      }
+      double angleToTurn = -(txToTurn)*(Math.PI/180); 
+      SmartDashboard.putNumber("TXTesting", txToTurn);
+      return angleToTurn;
+  }*/
 
 
 /**
