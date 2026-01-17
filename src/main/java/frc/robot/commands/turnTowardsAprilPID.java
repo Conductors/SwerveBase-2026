@@ -10,6 +10,7 @@ import frc.robot.Robot;
 
 public class turnTowardsAprilPID extends Command {
 private Drivetrain lDrivetrain;
+private Robot lRobot;
 private double m_goalPos = 0;
 private double wrappedAngle = 0;
 private double m_initialPos = 0;
@@ -23,13 +24,14 @@ private final ProfiledPIDController m_PIDController;
    * @param angle in Radians, positive is counter clockwise; 
    * @param drivetrain
 */
-  public turnTowardsAprilPID(double ang, double p_Period, Drivetrain driveTrain) {
+  public turnTowardsAprilPID(double p_Period, Drivetrain driveTrain, Robot robot) {
     
-    
-    wrappedAngle = MathUtil.angleModulus(ang); //Wrap the angle to be between -pi and pi
     lDrivetrain = driveTrain;
+    lRobot = robot;
     m_Period = p_Period;
     addRequirements(lDrivetrain);
+    
+
     m_PIDController =
     new ProfiledPIDController(
       1, 
@@ -45,6 +47,7 @@ private final ProfiledPIDController m_PIDController;
   public void initialize() {
     //Run once, at the start of the command
     m_initialPos = lDrivetrain.m_odometry.getPoseMeters().getRotation().getRadians();
+    wrappedAngle = MathUtil.angleModulus(lRobot.getAprilTx(3)); //Wrap the angle to be between -pi and pi
     System.out.println("InitPos = ");
     System.out.print(m_initialPos);
     m_goalPos = m_initialPos + wrappedAngle;
@@ -78,7 +81,8 @@ private final ProfiledPIDController m_PIDController;
   @Override
   public boolean isFinished() {
     // Determines when to finish the command
-    return m_PIDController.atGoal();
+    //return m_PIDController.atGoal();
+    return true;    //for simulation
    
   }
 

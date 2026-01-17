@@ -260,9 +260,8 @@ public Robot() {
     m_swerve.drive(xSpeed, ySpeed, rot, isFieldRelative, getPeriod()); 
   
 
-    if (tagID != 0){
-      System.out.print(tagID);
-      System.out.print("Something");
+    if (tagID != 0)
+    {
       for(RawFiducial fiducial : fiducials)
         if (fiducial.id == tagID) {
           txToTurn = fiducial.txnc;
@@ -270,14 +269,13 @@ public Robot() {
           txToTurn = 0;
         }
       angleToTurn = -(txToTurn)*(Math.PI/180); 
-      SmartDashboard.putNumber("TXTesting", txToTurn);
-      SmartDashboard.putNumber("angleToTurn", angleToTurn);
+    
+      //SmartDashboard.putNumber("TXTesting", txToTurn);
+      //SmartDashboard.putNumber("angleToTurn", angleToTurn);
       }
   }
 
   
-
-
   public void publishToDashboard()
   {
     SmartDashboard.putNumber("Controller Left X", m_controller.getLeftX());
@@ -286,7 +284,6 @@ public Robot() {
     SmartDashboard.putNumber("Gyro Angle", m_swerve.m_gyro.getRotation2d().getDegrees());
     SmartDashboard.putBoolean("High Gear Enabled", isHighGear);
     SmartDashboard.putBoolean("isFieldRelative", isFieldRelative);
-
     SmartDashboard.putNumber("RightTrigger", m_controller.getRightTriggerAxis());    
   }
 
@@ -349,7 +346,7 @@ public Robot() {
     return new driveToPositionPID(position, getPeriod(), m_swerve);
   }
 
-    public Command shiftGears() {
+  public Command shiftGears() {
     return Commands.sequence(
         new InstantCommand(() -> isHighGear=!isHighGear)
     );
@@ -362,17 +359,13 @@ public Robot() {
   }
 
   public Command turnTowardAprilTag(int tagID) {
-    //double angle = 0;
-    return Commands.sequence(
-      //new InstantCommand(() -> ang = angleToTurn),  //getAprilTx(3)
-      new turnTowardsAprilPID(angleToTurn, getPeriod(), m_swerve)
-    );
+    return new turnTowardsAprilPID(getPeriod(), m_swerve, this);
   }
 
-  /*public double getAprilTx (int tagID) {
-     System.out.print(tagID);
-        System.out.print("Something");
-            double txToTurn = 0;
+  public double getAprilTx (int tagID) {
+    System.out.print(tagID);
+    System.out.print("Something");
+    double txToTurn = Math.random();
 
     if (tagID != 0){
       
@@ -385,8 +378,9 @@ public Robot() {
       }
       double angleToTurn = -(txToTurn)*(Math.PI/180); 
       SmartDashboard.putNumber("TXTesting", txToTurn);
+      SmartDashboard.putNumber("AngleToTurn", angleToTurn);
       return angleToTurn;
-  }*/
+  }
 
 
 /**
