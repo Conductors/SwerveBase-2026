@@ -17,6 +17,7 @@ private double m_initialPos = 0;
 private double m_currentPos = 0;
 private double m_Period = Constants.kDefaultPeriod;
 private final ProfiledPIDController m_PIDController;
+private int[] l_tagsToCheck;
 
   /**
    *Creates a new command which will spin the robot in place a given angle.  This function optimizes to minimize the
@@ -24,8 +25,8 @@ private final ProfiledPIDController m_PIDController;
    * @param angle in Radians, positive is counter clockwise; 
    * @param drivetrain
 */
-  public turnTowardsAprilPID(double p_Period, Drivetrain driveTrain, Robot robot) {
-    
+  public turnTowardsAprilPID(int[] tagsToCheck, double p_Period, Drivetrain driveTrain, Robot robot) {
+    l_tagsToCheck = tagsToCheck;
     lDrivetrain = driveTrain;
     lRobot = robot;
     m_Period = p_Period;
@@ -47,9 +48,12 @@ private final ProfiledPIDController m_PIDController;
   public void initialize() {
     //Run once, at the start of the command
     m_initialPos = lDrivetrain.m_odometry.getPoseMeters().getRotation().getRadians();
-    wrappedAngle = MathUtil.angleModulus(lRobot.getAprilTx(3)); //Wrap the angle to be between -pi and pi
-    System.out.println("InitPos = ");
-    System.out.print(m_initialPos);
+    
+    wrappedAngle = MathUtil.angleModulus(lRobot.getAprilTx(l_tagsToCheck)); //Wrap the angle to be between -pi and pi
+    
+    //System.out.println("InitPos = ");
+    //System.out.print(m_initialPos);
+    
     m_goalPos = m_initialPos + wrappedAngle;
   }
 
@@ -63,12 +67,11 @@ private final ProfiledPIDController m_PIDController;
     System.out.print("Current Dist = ");
     System.out.println(m_currDistance);*/
     lDrivetrain.drive(0,0,
-    MathUtil.clamp(m_PIDController.calculate(m_currentPos, m_goalPos), 
-      -Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, 
-      Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond), 
-    
-    false, 
-    m_Period);
+      MathUtil.clamp(m_PIDController.calculate(m_currentPos, m_goalPos), 
+        -Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, 
+        Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond), 
+      false, 
+      m_Period);
   }
 
   @Override

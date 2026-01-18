@@ -63,17 +63,10 @@ public final class Constants {
         public static final String[] kAutoProgram = {"None", "Auto 1", "Auto 2", "Auto 3", "BackUp", "ScoreOneCoral", "ScoreCoralTake1Algae", "diagScoreReef", "ScoreCoralClearAlgae"};
       }
 
-      public static final class coralConstants {
-
-        public static final double kP_elevatorA = 0.1;
-        public static final double kP_elevatorB = 0.1;
-        public static final double kP_tilt      = 2.5;
-        
-        public static final double elevatorMaxVelocity = 100;
-        public static final double elevatorMaxAccel = 1000;
-
-        public static final double tiltMaxVelocity = 1;
-        public static final double tiltMaxAccel = 1;
-      }
+  public static final class AprilTagConstants {
+    public static final int[] leftTags = {1, 3};      //red, blue alliance tags
+    public static final int[] frontTags = {2, 4};     //red, blue alliance tags
+    public static final int[] rightTags = {5, 6};     //red, blue alliance tags
+  }
 
 }

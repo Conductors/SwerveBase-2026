@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -12,7 +11,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.LEDPattern;
+//import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -21,7 +20,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.LimelightHelpers.RawFiducial;
@@ -30,10 +28,10 @@ import frc.robot.commands.driveSpinwaysPID;
 import frc.robot.commands.driveStraightPID;
 import frc.robot.commands.driveToPositionPID;
 import frc.robot.commands.turnTowardsAprilPID;
-import frc.robot.subsystems.LEDSubsystem;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+//import frc.robot.subsystems.LEDSubsystem;
+//import java.util.AbstractMap;
+//import java.util.HashMap;
+//import java.util.Map;
 
 public class Robot extends TimedRobot {
   private final CommandXboxController m_controller = new CommandXboxController(0);
@@ -43,7 +41,7 @@ public class Robot extends TimedRobot {
   private Trigger bButton     = m_controller.b(); 
   private Trigger startButton = m_controller.start(); 
   private Trigger backButton  = m_controller.back();
-  private Trigger lbButton     = m_controller.leftBumper();
+  private Trigger lbButton    = m_controller.leftBumper();
   private Trigger rbButton    = m_controller.rightBumper(); 
   private Trigger lBTrigger   = m_controller.leftTrigger(0.1); 
   private Trigger rBTrigger   = m_controller.rightTrigger(.1); 
@@ -62,7 +60,8 @@ public class Robot extends TimedRobot {
 
   StructPublisher<Pose2d> publisher = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
 
-  private HashMap<Integer, RawFiducial> aprilTags = new HashMap<Integer, RawFiducial>();
+  //private HashMap<Integer, RawFiducial> aprilTags = new HashMap<Integer, RawFiducial>();
+  
   // Slew rate limiters to make joystick inputs more gentle; Passing in "3" means 1/3 sec from 0 to 1.
   private final SlewRateLimiter m_xspeedLimiter = new SlewRateLimiter(3);
   private final SlewRateLimiter m_yspeedLimiter = new SlewRateLimiter(3);
@@ -74,9 +73,6 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_AutoChooser = new SendableChooser<>();
   private final SendableChooser<String> m_AprilTagSelected = new SendableChooser<>();
 
-  private final LEDSubsystem ledSystem = new LEDSubsystem();
-
-  private LimelightHelpers limelight = new LimelightHelpers();
   int id;                  // Tag ID
   double txnc;             // X offset (no crosshair)
   double tync;             // Y offset (no crosshair)
@@ -86,7 +82,8 @@ public class Robot extends TimedRobot {
   double ambiguity;        // Tag pose ambiguity
   int closestAprilTagID = 0;  //Tag ID with the greatest area
 
-  private int tagID = 3;
+  private int[] hubTags = {1, 3, 5};
+  private int tagID = 0;
   private double txToTurn = 0;
   private double angleToTurn = 0;
 
@@ -145,16 +142,19 @@ public Robot() {
         distToCamera = fiducial.distToCamera;  // Distance to camera
         distToRobot = fiducial.distToRobot;    // Distance to robot
         ambiguity = fiducial.ambiguity;   // Tag pose ambiguity
-      if(ta > closestAprilTagArea) {
-        closestAprilTagArea = ta;
-        closestAprilTagID = id;
-      }
+      
+        if(ta > closestAprilTagArea) 
+        {
+          closestAprilTagArea = ta;
+          closestAprilTagID = id;
+        }
+
+
     }
 
     SmartDashboard.putNumber("distToCamera", distToCamera);
     SmartDashboard.putNumber("Txnc", txnc);
     SmartDashboard.putNumber("closestAprilTag", closestAprilTagID);
-
     
   }
 
@@ -190,7 +190,7 @@ public Robot() {
     backButton.onTrue(shiftGears()); 
     startButton.onTrue(changeIsFieldRelative());
     
-    aButton.onTrue(turnTowardAprilTag(3)); 
+    aButton.onTrue(turnTowardAprilTag(Constants.AprilTagConstants.leftTags)); 
     //aButton.onTrue(turnTorwardAprilTag(m_AprilTagSelected.getSelected()));   //turn toward the closest AprilTag 
   //turn toward the closest AprilTag 
     bButton.onTrue(new driveSpinwaysPID(0, getPeriod(), m_swerve));
@@ -358,58 +358,31 @@ public Robot() {
     );
   }
 
-  public Command turnTowardAprilTag(int tagID) {
-    return new turnTowardsAprilPID(getPeriod(), m_swerve, this);
+  public Command turnTowardAprilTag(int[] tagIDs) {
+    return new turnTowardsAprilPID(tagIDs, getPeriod(), m_swerve, this);
   }
 
-  public double getAprilTx (int tagID) {
-    System.out.print(tagID);
-    System.out.print("Something");
-    double txToTurn = Math.random();
+  public double getAprilTx (int[] tagIDs) {
+    double txToTurn = 0; //Math.random(); //use random for simulation
 
-    if (tagID != 0){
-      
-      for(RawFiducial fiducial : fiducials)
-        if (fiducial.id == tagID) {
-          txToTurn = fiducial.txnc;
-        } else {
-          txToTurn = 0;
+    if (tagID != 0)
+    {
+      for(RawFiducial fiducial : fiducials)   //cycle through all detected April Tags
+      {
+        for(int tagID : tagIDs) {             //determine if any of the detect tags are in the list of inters
+          if (fiducial.id == tagID) {
+            txToTurn = fiducial.txnc;
+          } else {
+            txToTurn = 0;
+          }
         }
       }
-      double angleToTurn = -(txToTurn)*(Math.PI/180); 
+    }
+      angleToTurn = -(txToTurn)*(Math.PI/180); 
       SmartDashboard.putNumber("TXTesting", txToTurn);
       SmartDashboard.putNumber("AngleToTurn", angleToTurn);
       return angleToTurn;
   }
 
-
-/**
- * diagScoreAuto starts in front of the cage closest to the wall facing towards the driver stations
- * Drives towards the reef, scores on Reef 1, then backs up
- * @param isOnBlueSide Set to TRUE if the Robot starts on the BlueSide (vs. false for RedSide)
- * @return
- */
-public Command diagScoreAuto(boolean isOnBlueSide) {
-  return Commands.sequence(
-    new InstantCommand(() -> m_swerve.resetOdometry(new Pose2d(0,0, new Rotation2d(0)))),
-    new InstantCommand(() -> System.out.println("Drive Forward")),
-    driveStraight(1.25), 
-    new InstantCommand(() -> System.out.println("Turn 60 Degrees CCW")),
-    driveSpinways(Math.PI/3),
-    new InstantCommand(() -> System.out.println("Drive Forward to Reef")),
-    driveStraight(3.3), //calculate the diagnoal distance to the reef
-    new InstantCommand(() -> System.out.println("Set Coral Height - Reef 1")),
-    //setCoralHeight(Constants.Position.keReef1),
-    new InstantCommand(() -> System.out.println("Set Coral Tilt - Score")),
-    //scoreCoralReef1(),
-    new InstantCommand(() -> System.out.println("Wait")),
-    new WaitCommand(3.5),
-    new InstantCommand(() -> System.out.println("Set Coral Height - Stow")),
-    //stowCoral(),
-    new InstantCommand(() -> System.out.println("Stop & wait  .5 seconds")),
-    new InstantCommand(() -> m_swerve.drive(0,0,0,false, getPeriod())).repeatedly().withTimeout(.5),
-    new InstantCommand(() -> System.out.println("Done !")));
-}
- 
 
 }
