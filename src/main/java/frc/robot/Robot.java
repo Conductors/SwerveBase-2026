@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import java.io.Serial;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -11,6 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID;
 //import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -22,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.commands.driveSidewaysPID;
 import frc.robot.commands.driveSpinwaysPID;
@@ -35,6 +39,7 @@ import frc.robot.commands.turnTowardsAprilPID;
 
 public class Robot extends TimedRobot {
   private final CommandXboxController m_controller = new CommandXboxController(0);
+  private final GenericHID m_buttonBoard = new GenericHID(1);
   private Trigger yButton     = m_controller.y(); 
   private Trigger xButton     = m_controller.x(); 
   private Trigger aButton     = m_controller.a(); 
@@ -49,6 +54,9 @@ public class Robot extends TimedRobot {
   private Trigger povDown     = m_controller.povDown();
   private Trigger povLeft     = m_controller.povLeft();
   private Trigger povRight    = m_controller.povRight();
+  private Trigger green       = new JoystickButton(m_buttonBoard, 1);
+  private Trigger yellow       = new JoystickButton(m_buttonBoard, 2);
+  private Trigger blue       = new JoystickButton(m_buttonBoard, 3);
   
   private boolean isHighGear = false;
   private boolean isFieldRelative = false;
@@ -82,8 +90,6 @@ public class Robot extends TimedRobot {
   double ambiguity;        // Tag pose ambiguity
   int closestAprilTagID = 0;  //Tag ID with the greatest area
 
-  private int[] hubTags = {1, 3, 5};
-  private int tagID = 0;
   private double txToTurn = 0;
   private double angleToTurn = 0;
 
@@ -191,6 +197,9 @@ public Robot() {
     startButton.onTrue(changeIsFieldRelative());
     
     aButton.onTrue(turnTowardAprilTag(Constants.AprilTagConstants.leftTags)); 
+    green.onTrue(turnTowardAprilTag(Constants.AprilTagConstants.leftTags)); 
+    yellow.onTrue(turnTowardAprilTag(Constants.AprilTagConstants.frontTags)); 
+    blue.onTrue(turnTowardAprilTag(Constants.AprilTagConstants.rightTags)); 
     //aButton.onTrue(turnTorwardAprilTag(m_AprilTagSelected.getSelected()));   //turn toward the closest AprilTag 
   //turn toward the closest AprilTag 
     bButton.onTrue(new driveSpinwaysPID(0, getPeriod(), m_swerve));
@@ -260,7 +269,7 @@ public Robot() {
     m_swerve.drive(xSpeed, ySpeed, rot, isFieldRelative, getPeriod()); 
   
 
-    if (tagID != 0)
+    /*if (tagID != 0)
     {
       for(RawFiducial fiducial : fiducials)
         if (fiducial.id == tagID) {
@@ -272,7 +281,7 @@ public Robot() {
     
       //SmartDashboard.putNumber("TXTesting", txToTurn);
       //SmartDashboard.putNumber("angleToTurn", angleToTurn);
-      }
+      }*/
   }
 
   
@@ -364,16 +373,18 @@ public Robot() {
 
   public double getAprilTx (int[] tagIDs) {
     double txToTurn = 0; //Math.random(); //use random for simulation
-
-    if (tagID != 0)
+    if (tagIDs.length != 0)
     {
+      System.out.println("TagID != 0");
       for(RawFiducial fiducial : fiducials)   //cycle through all detected April Tags
       {
         for(int tagID : tagIDs) {             //determine if any of the detect tags are in the list of inters
           if (fiducial.id == tagID) {
             txToTurn = fiducial.txnc;
+            System.out.println(txToTurn);
           } else {
-            txToTurn = 0;
+            //txToTurn = 0;
+            System.out.println("TagID = 0");
           }
         }
       }

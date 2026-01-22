@@ -3,6 +3,8 @@ package frc.robot.commands;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Drivetrain;
@@ -18,6 +20,7 @@ private double m_currentPos = 0;
 private double m_Period = Constants.kDefaultPeriod;
 private final ProfiledPIDController m_PIDController;
 private int[] l_tagsToCheck;
+private Timer m_timer = new Timer();
 
   /**
    *Creates a new command which will spin the robot in place a given angle.  This function optimizes to minimize the
@@ -35,13 +38,13 @@ private int[] l_tagsToCheck;
 
     m_PIDController =
     new ProfiledPIDController(
-      1, 
+      .1, 
       0,
       0, 
       new TrapezoidProfile.Constraints(
-                  6,
-                    36));
-  m_PIDController.setTolerance(.01);
+                  9,
+                    48));
+  m_PIDController.setTolerance(.1);
   }
 
   @Override
@@ -51,10 +54,20 @@ private int[] l_tagsToCheck;
     
     wrappedAngle = MathUtil.angleModulus(lRobot.getAprilTx(l_tagsToCheck)); //Wrap the angle to be between -pi and pi
     
-    //System.out.println("InitPos = ");
-    //System.out.print(m_initialPos);
+    
+    System.out.print("wrappedAngle = ");
+    System.out.println(wrappedAngle);
+    
+
+    System.out.print("InitPos = ");
+    System.out.println(m_initialPos);
+    
     
     m_goalPos = m_initialPos + wrappedAngle;
+
+    System.out.print("GoalPos = ");
+    System.out.println(m_goalPos);
+
   }
 
   @Override
@@ -62,16 +75,26 @@ private int[] l_tagsToCheck;
     //run repeatedly, until isFinished() returns true
     m_currentPos = lDrivetrain.m_odometry.getPoseMeters().getRotation().getRadians();
     //m_currDistance = Math.abs(m_currentPos - m_initialPos);
-   /*  System.out.print("Current Pos = ");
+    System.out.print("Current Pos = ");
     System.out.println(m_currentPos);
+    /*
     System.out.print("Current Dist = ");
     System.out.println(m_currDistance);*/
+    double aprilRot = MathUtil.clamp(m_PIDController.calculate(m_currentPos, m_goalPos), 
+        -Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, 
+        Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond);
+
     lDrivetrain.drive(0,0,
       MathUtil.clamp(m_PIDController.calculate(m_currentPos, m_goalPos), 
         -Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, 
         Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond), 
       false, 
       m_Period);
+
+      SmartDashboard.putNumber("CurrentPosAPril", m_currentPos);
+      SmartDashboard.putNumber("GoalPos", m_goalPos);
+      SmartDashboard.putNumber("AprilError", m_PIDController.getPositionError());
+      SmartDashboard.putNumber("AprilRotCommand", aprilRot);
   }
 
   @Override
@@ -85,7 +108,19 @@ private int[] l_tagsToCheck;
   public boolean isFinished() {
     // Determines when to finish the command
     //return m_PIDController.atGoal();
-    return true;    //for simulation
+    boolean rv = false;
+    if (m_PIDController.atGoal()) {
+      m_timer.start();
+    } else {
+      m_timer.reset();
+    }
+    System.out.println("Timer value");
+    System.out.print(m_timer.get());
+    if (m_timer.hasElapsed(0.5)) {
+      rv = true;
+    }
+    return rv;
+    //return true;    //for simulation
    
   }
 

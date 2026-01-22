@@ -64,9 +64,9 @@ public final class Constants {
       }
 
   public static final class AprilTagConstants {
-    public static final int[] leftTags = {1, 3};      //red, blue alliance tags
-    public static final int[] frontTags = {2, 4};     //red, blue alliance tags
-    public static final int[] rightTags = {5, 6};     //red, blue alliance tags
+    public static final int[] leftTags = {13, 3};      //red, blue alliance tags
+    public static final int[] frontTags = {1, 11};     //red, blue alliance tags
+    public static final int[] rightTags = {2, 12};     //red, blue alliance tags
   }
 
 }

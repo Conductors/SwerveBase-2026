@@ -131,7 +131,8 @@ public class Drivetrain extends SubsystemBase {
     m_backLeft.setDesiredState(swerveModuleStates[2]);
     m_backRight.setDesiredState(swerveModuleStates[3]);
 
-    m_ServeRot = rot;          
+    m_ServeRot = rot;     
+    SmartDashboard.putNumber("m_ServeRot", m_ServeRot);     
 
     double[] moduleDesiredStates = {
       swerveModuleStates[0].angle.getDegrees(),
