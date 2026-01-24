@@ -38,13 +38,13 @@ private Timer m_timer = new Timer();
 
     m_PIDController =
     new ProfiledPIDController(
-      .1, 
+      5, 
       0,
       0, 
       new TrapezoidProfile.Constraints(
                   9,
                     48));
-  m_PIDController.setTolerance(.1);
+  m_PIDController.setTolerance(.01);
   }
 
   @Override
@@ -55,14 +55,12 @@ private Timer m_timer = new Timer();
     wrappedAngle = MathUtil.angleModulus(lRobot.getAprilTx(l_tagsToCheck)); //Wrap the angle to be between -pi and pi
     
     
-    System.out.print("wrappedAngle = ");
-    System.out.println(wrappedAngle);
-    
-
-    System.out.print("InitPos = ");
-    System.out.println(m_initialPos);
-    
-    
+    //System.out.print("wrappedAngle = ");
+    //System.out.println(wrappedAngle);
+   
+    //System.out.print("InitPos = ");
+    //System.out.println(m_initialPos);
+     
     m_goalPos = m_initialPos + wrappedAngle;
 
     System.out.print("GoalPos = ");
@@ -95,6 +93,14 @@ private Timer m_timer = new Timer();
       SmartDashboard.putNumber("GoalPos", m_goalPos);
       SmartDashboard.putNumber("AprilError", m_PIDController.getPositionError());
       SmartDashboard.putNumber("AprilRotCommand", aprilRot);
+
+      System.out.print("April Error: ");
+      System.out.println(m_PIDController.getPositionError());
+
+      System.out.print("AprilRotCmd: ");
+      System.out.println(aprilRot);
+
+
   }
 
   @Override
@@ -116,7 +122,7 @@ private Timer m_timer = new Timer();
     }
     System.out.println("Timer value");
     System.out.print(m_timer.get());
-    if (m_timer.hasElapsed(0.5)) {
+    if (m_timer.hasElapsed(0.03)) {
       rv = true;
     }
     return rv;
